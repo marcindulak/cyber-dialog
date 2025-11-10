@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google" content="notranslate">
+    <title>Cyber Dialog</title>
+    <link rel="icon" href="data:,">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 900px;
+            margin: 10px auto;
+            padding: 10px 20px;
+            line-height: 1.6;
+        }
+        h1 { font-size: 1.1em; margin: 0; }
+        .header-container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .header-right { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+        h2 { font-size: 1.1em; margin: 0; padding: 8px 8px; }
+        select { padding: 6px 8px; font-size: 1.0em; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; }
+        select:focus { outline: 2px solid #0066cc; outline-offset: 2px; }
+        .tabs { display: flex; gap: 5px; border-bottom: 2px solid #ddd; overflow-x: auto; align-items: center; }
+        .tab {
+            padding: 8px 8px;
+            border: none;
+            background: none;
+            font-size: 18px;
+            font-weight: bold;
+            color: #666;
+            border-bottom: 4px solid transparent;
+            cursor: pointer;
+        }
+        .tab:hover, .tab.active { color: #0066cc; }
+        .tab.active { border-bottom-color: #0066cc; }
+        .tab-content, .dialogue-container { display: none; }
+        .tab-content.active, .dialogue-container.active { display: block; }
+        .chapter-item, .quiz-question {
+            padding: 15px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .chapter-item:hover { background: #f5f5f5; border-color: #0066cc; }
+        .chapter-item.selected { border-color: #0066cc; }
+        .dialogue-line {
+            margin: 15px 0;
+            padding: 10px;
+            white-space: pre-wrap;
+            line-height: 1.8;
+        }
+        .dialogue-line.highlight { background: #ffc; border-radius: 4px; }
+        .speaker-first { font-weight: bold; color: #0066cc; }
+        .speaker-second { font-weight: bold; color: #cc6600; }
+        .answer-option {
+            display: block;
+            padding: 12px;
+            margin: 8px 0;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .answer-option:hover { background: #f5f5f5; }
+        .controls, .quiz-score { position: sticky; top: 0; background: white; padding: 15px; text-align: center; z-index: 10; }
+        .controls { border-bottom: 2px solid #0066cc; }
+        .quiz-score { border: 2px solid #0066cc; border-radius: 8px; margin-top: 10px; margin-bottom: 20px; }
+        button {
+            padding: 8px 8px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            background: #0066cc;
+            font-size: 0.9em;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover { filter: brightness(0.9); }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .back-button { background: #666; }
+        .quiz-question { cursor: default; }
+        .quiz-question.answered-correct { border-color: #28a745; background: #f0f9f0; }
+        .quiz-question.answered-incorrect { border-color: #dc3545; background: #fff5f5; }
+        .answer-option.correct { border-color: #28a745; background: #e7f4e7; }
+        .answer-option.incorrect { border-color: #dc3545; background: #fce8e8; }
+        .answer-option input { margin-right: 10px; }
+        .rationale { margin-top: 15px; padding: 15px; background: #f0f7ff; border-left: 4px solid #0066cc; display: none; }
+        .rationale.show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="header-container">
+        <div class="header-right">
+            <h1 id="main-title">Cyber Dialog</h1>
+            <div class="copyright">
+                &copy; <a href="https://github.com/marcindulak/cyber-dialog">marcindulak</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('learn')"></button>
+        <button class="tab" onclick="showTab('quiz')"></button>
+        <div class="lang-selector">
+            <select id="lang-dropdown" onchange="switchLanguage(this.value)">
+                <option value="en">🇺🇸 English</option>
+                <option value="pl">🇵🇱 Polski</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="learn-tab" class="tab-content active">
+        <div id="chapter-list" class="chapter-list"></div>
+
+        <div id="dialogue-container" class="dialogue-container">
+            <div class="controls"></div>
+            <div id="dialogue-content"></div>
+        </div>
+    </div>
+
+    <div id="quiz-tab" class="tab-content">
+        <div id="quiz-chapter-list" class="chapter-list"></div>
+        <div id="quiz-container" style="display: none;">
+            <div class="controls">
+                <button class="back-button" onclick="showQuizList()"></button>
+            </div>
+            <div id="quiz-score" class="quiz-score" style="display: none;"></div>
+            <div id="quiz-content"></div>
+            <div class="submit-quiz">
+                <button onclick="checkAnswers()"></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        var chapters = [];
+        var selectedChapter = null;
+        // Global language state. Updated by user actions: switchLanguage() or URL parameters during init.
+        // DESIGN INCONSISTENCY: Some functions (loadREADME, parseReadme) receive lang as explicit parameter,
+        // while others (updateUIText, showQuiz, showChapter) rely on this global variable.
+        // This inconsistency should be resolved by either:
+        // 1. Pass lang parameter to ALL functions that need it, OR
+        // 2. Have all functions use the global currentLang exclusively.
+        // For now, we use both approaches: async functions get explicit parameter (safer during race conditions),
+        // sync functions use global (because they're called immediately after currentLang is updated).
+        var currentLang = 'pl';  // Default language
+
+        // To add a new language, add an entry here and create README.{lang}.md
+        var languageConfig = {
+            'pl': {
+                speechCode: 'pl-PL',
+                speakers: {
+                    first: 'Ostrożna',
+                    second: 'Ciekawska'
+                },
+                keywords: {
+                    references: 'Źródła',
+                    quiz: 'Test',
+                    type: 'Typ',
+                    answer: 'Odpowiedź',
+                    explanation: 'Wyjaśnienie',
+                    explanations: 'Wyjaśnienia',
+                    trueValue: 'Prawda',
+                    falseValue: 'Fałsz',
+                    trueFalseType: 'prawda-fałsz',
+                    multipleChoiceType: 'wielokrotny-wybór'
+                },
+                ui: {
+                    tabLearning: 'Nauka',
+                    tabQuiz: 'Test',
+                    selectChapter: 'Wybierz tematy poniżej, aby uczyć się cyberbezpieczeństwa:',
+                    duration: 'Czas trwania:',
+                    playDialogue: 'Odsłuchaj dialog',
+                    pause: '⏸️ Zatrzymaj',
+                    resume: '▶️ Wznów',
+                    selectQuizChapter: 'Wybierz tematy poniżej, aby sprawdzić wiedzę z cyberbezpieczeństwa:',
+                    numQuestions: 'Liczba pytań:',
+                    checkAnswers: 'Sprawdź odpowiedzi',
+                    backToChapters: 'Wróc do tematów',
+                    score: 'Wynik:',
+                    correct: 'poprawnych',
+                    loadError: 'Błąd ładowania',
+                    noDialogues: 'Nie znaleziono dialogów',
+                    browserNoSpeech: 'Twoja przeglądarka nie obsługuje syntezy mowy.',
+                    quizTrue: 'Prawda',
+                    quizFalse: 'Fałsz'
+                }
+            },
+            'en': {
+                speechCode: 'en-US',
+                speakers: {
+                    first: 'Wary',
+                    second: 'Curious'
+                },
+                keywords: {
+                    references: 'References',
+                    quiz: 'Quiz',
+                    type: 'Type',
+                    answer: 'Answer',
+                    explanation: 'Explanation',
+                    explanations: 'Explanations',
+                    trueValue: 'True',
+                    falseValue: 'False',
+                    trueFalseType: 'true-false',
+                    multipleChoiceType: 'multiple-choice'
+                },
+                ui: {
+                    tabLearning: 'Learning',
+                    tabQuiz: 'Quiz',
+                    selectChapter: 'Select topics below to learn about cybersecurity:',
+                    duration: 'Duration:',
+                    playDialogue: 'Play the dialogue',
+                    pause: '⏸️ Pause',
+                    resume: '▶️ Resume',
+                    selectQuizChapter: 'Select topics below to check your cybersecurity knowledge:',
+                    numQuestions: 'Number of questions:',
+                    checkAnswers: 'Check answers',
+                    backToChapters: 'Go back to topics',
+                    score: 'Score:',
+                    correct: 'correct',
+                    loadError: 'Error loading',
+                    noDialogues: 'No dialogues found',
+                    browserNoSpeech: 'Your browser does not support speech synthesis.',
+                    quizTrue: 'True',
+                    quizFalse: 'False'
+                }
+            }
+        };
+
+        async function switchLanguage(lang) {
+            stopSpeaking();
+
+            const url = new URL(window.location);
+            url.searchParams.set('lang', lang);
+            window.history.pushState({}, '', url);
+
+            document.getElementById('lang-dropdown').value = lang;
+
+            const savedDialogueChapter = selectedChapter;
+            const savedQuizChapter = selectedQuizChapter;
+
+            userAnswers = {};
+            selectedChapter = null;
+            selectedQuizChapter = null;
+
+            currentLang = lang;
+            updateUIText();
+            await loadREADME(lang);
+
+            if (savedQuizChapter !== null && chapters[savedQuizChapter]) {
+                showQuiz(savedQuizChapter, false);
+            } else if (savedDialogueChapter !== null && chapters[savedDialogueChapter]) {
+                showChapter(savedDialogueChapter);
+            }
+        }
+
+        function updateUIText() {
+            const text = languageConfig[currentLang].ui;
+
+            document.querySelectorAll('.tab')[0].textContent = text.tabLearning;
+            document.querySelectorAll('.tab')[1].textContent = text.tabQuiz;
+
+            const quizBackButton = document.querySelector('#quiz-container .back-button');
+            if (quizBackButton) {
+                quizBackButton.textContent = text.backToChapters;
+            }
+            const submitButton = document.querySelector('.submit-quiz button');
+            if (submitButton) {
+                submitButton.textContent = text.checkAnswers;
+            }
+        }
+
+        function toZeroIndexed(n) {
+            return n - 1;
+        }
+
+        function toOneIndexed(n) {
+            return n + 1;
+        }
+
+        function getURLParameters() {
+            const params = new URLSearchParams(window.location.search);
+            const urlChapter = params.get('chapter') ? parseInt(params.get('chapter')) : null;
+            return {
+                lang: params.get('lang') || 'pl',
+                mode: params.get('mode') || 'learning',
+                chapter: urlChapter !== null ? toZeroIndexed(urlChapter) : null
+            };
+        }
+
+        function updateURL(mode = null, chapter = null) {
+            const url = new URL(window.location);
+            url.search = '';
+
+            mode = mode !== null ? mode : (url.searchParams.get('mode') || 'learning');
+
+            if (chapter !== null) {
+                url.searchParams.set('chapter', toOneIndexed(chapter));
+            }
+            url.searchParams.set('lang', currentLang);
+            url.searchParams.set('mode', mode);
+
+            window.history.pushState({}, '', url);
+        }
+
+        async function loadREADME(lang) {
+            try {
+                const response = await fetch(`README.${lang}.md`);
+                const markdown = await response.text();
+                parseReadme(markdown, lang);
+
+                const text = languageConfig[lang].ui;
+
+                // Render chapter list
+                if (chapters.length === 0) {
+                    document.getElementById('chapter-list').innerHTML =
+                        `<p>${text.noDialogues}</p>`;
+                } else {
+                    let chapterHtml = `<h2>${text.selectChapter}</h2>`;
+                    chapters.forEach((chapter, i) => {
+                        chapterHtml += `<div class="chapter-item" onclick="showChapter(${i})">`;
+                        chapterHtml += `<div class="chapter-title">${chapter.title}</div>`;
+                        chapterHtml += `<div>${text.duration} ${estimateDuration(chapter)}</div>`;
+                        chapterHtml += `</div>`;
+                    });
+                    document.getElementById('chapter-list').innerHTML = chapterHtml;
+                }
+
+                // Render quiz list
+                let quizHtml = `<h2>${text.selectQuizChapter}</h2>`;
+                chapters.forEach((chapter, i) => {
+                    if (chapter.questions && chapter.questions.length > 0) {
+                        quizHtml += `<div class="chapter-item" onclick="showQuiz(${i})">`;
+                        quizHtml += `<div class="chapter-title">${chapter.title}</div>`;
+                        quizHtml += `<div>${text.numQuestions} ${chapter.questions.length}</div>`;
+                        quizHtml += `</div>`;
+                    }
+                });
+                document.getElementById('quiz-chapter-list').innerHTML = quizHtml;
+
+            } catch (error) {
+                const text = languageConfig[lang].ui;
+                document.getElementById('chapter-list').innerHTML =
+                    `<p style="color: red;">${text.loadError} README.${lang}.md: ${error.message}</p>`;
+            }
+        }
+
+        function parseReadme(markdown, lang) {
+            chapters = [];
+            const lines = markdown.split('\n');
+            let currentChapter = null;
+            let currentLine = null;
+            let inReferences = false;
+            let inQuiz = false;
+            let inQuizDetails = false;
+            let currentQuestion = null;
+
+            const config = languageConfig[lang];
+            const keywords = config.keywords;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+
+                // Detect chapter headings (## Temat or ## Topic)
+                if (line.startsWith('## ')) {
+                    if (currentChapter && currentChapter.lines.length > 0) {
+                        chapters.push(currentChapter);
+                    }
+                    currentChapter = {
+                        title: line.replace('##', '').trim(),
+                        lines: [],
+                        references: [],
+                        questions: []
+                    };
+                    inReferences = false;
+                    inQuiz = false;
+                    currentLine = null;
+                    continue;
+                }
+
+                if (line.startsWith(`### ${keywords.references}`)) {
+                    inReferences = true;
+                    inQuiz = false;
+                    continue;
+                }
+
+                if (line.startsWith(`### ${keywords.quiz}`)) {
+                    inReferences = false;
+                    inQuiz = true;
+                    continue;
+                }
+
+                if (inReferences && currentChapter && line.length > 0) {
+                    // Match pattern like [1] Reference text...
+                    const refMatch = line.match(/^\[(\d+)\]\s*(.+)/);
+                    if (refMatch) {
+                        currentChapter.references.push({
+                            number: refMatch[1],
+                            text: refMatch[2]
+                        });
+                    }
+                    continue;
+                }
+
+                if (inQuiz && line.includes('<details>')) {
+                    inQuizDetails = true;
+                    currentQuestion = {
+                        type: '',
+                        question: '',
+                        correct: [],
+                        answers: [],
+                        rationale: '',
+                        rationales: []
+                    };
+                    continue;
+                }
+
+                if (inQuiz && inQuizDetails && line.includes('</details>')) {
+                    if (currentQuestion && currentChapter) {
+                        currentChapter.questions.push(currentQuestion);
+                    }
+                    inQuizDetails = false;
+                    currentQuestion = null;
+                    continue;
+                }
+
+                if (inQuiz && inQuizDetails && currentQuestion) {
+                    if (line.includes('<summary>')) {
+                        const match = line.match(/.*: (.+)<\/summary>/);
+                        if (match) {
+                            currentQuestion.question = match[1];
+                        }
+                    } else if (line.startsWith(`**${keywords.type}:**`)) {
+                        const type = line.replace(`**${keywords.type}:**`, '').trim();
+                        currentQuestion.type = type;
+                    } else if (line.startsWith(`**${keywords.answer}:**`)) {
+                        const answer = line.replace(`**${keywords.answer}:**`, '').trim();
+                        if (answer === keywords.trueValue) {
+                            currentQuestion.correct = [true];
+                        } else if (answer === keywords.falseValue) {
+                            currentQuestion.correct = [false];
+                        }
+                    } else if (line.startsWith(`**${keywords.explanation}:**`)) {
+                        currentQuestion.rationale = line.replace(`**${keywords.explanation}:**`, '').trim();
+                    } else if (line.startsWith('- ✓')) {
+                        const answer = line.replace('- ✓', '').trim();
+                        currentQuestion.correct.push(currentQuestion.answers.length);
+                        currentQuestion.answers.push(answer);
+                    } else if (line.startsWith('- ✗')) {
+                        const answer = line.replace('- ✗', '').trim();
+                        currentQuestion.answers.push(answer);
+                    } else if (line.startsWith(`**${keywords.explanations}:**`)) {
+                        continue;
+                    } else if (line.startsWith('- ') && currentQuestion.answers.length > 0) {
+                        const rationale = line.replace(/^- /, '').trim();
+                        currentQuestion.rationales.push(rationale);
+                    }
+                    continue;
+                }
+
+                if (!inReferences && !inQuiz && currentChapter) {
+                    const speakerMatch = line.match(/\*\*([^*]+):\*\* (.+)/);
+                    if (speakerMatch) {
+                        currentLine = {
+                            speaker: speakerMatch[1],
+                            text: speakerMatch[2]
+                        };
+                        currentChapter.lines.push(currentLine);
+                    }
+                    else if (line.length > 0 && currentLine) {
+                        currentLine.text += '\n' + line;
+                    }
+                }
+            }
+
+            if (currentChapter && currentChapter.lines.length > 0) {
+                chapters.push(currentChapter);
+            }
+        }
+
+        function estimateDuration(chapter) {
+            const totalChars = chapter.lines.reduce((sum, line) => sum + line.text.length, 0);
+
+            // Estimate duration based on speech synthesis rate of 0.90
+            // Approximately 850 characters per minute at this rate
+            const charsPerMinute = 850;
+            const minutes = Math.ceil(totalChars / charsPerMinute);
+
+            return `${minutes} min`;
+        }
+
+        function convertReferencesToSuperscript(text) {
+            return text.replace(/\[(\d+)\]/g, '<sup>[$1]</sup>');
+        }
+
+        // Convert markdown links [text](url) to HTML links
+        function convertMarkdownLinks(text) {
+            return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+        }
+
+        function convertMarkdownFormatting(text) {
+            return text
+                .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')  // **bold**
+                .replace(/\*([^*]+)\*/g, '<em>$1</em>');              // *italic*
+        }
+
+        // Convert markdown images ![alt](url) to HTML img tags
+        function convertMarkdownImages(text) {
+            return text.replace(/!\[(.*?)\]\((.*?)\)/g, '<img alt="$1" src="$2" style="max-width: 100%; height: auto; border-radius: 8px; margin: 15px 0;">');
+        }
+
+        function showChapter(chapterIndex) {
+            selectedChapter = chapterIndex;
+            const chapter = chapters[chapterIndex];
+            const config = languageConfig[currentLang];
+            const text = config.ui;
+
+            const controls = document.querySelector('#dialogue-container .controls');
+            controls.innerHTML = `
+                <button id="play-pause-button" onclick="togglePlayPause()">${text.playDialogue}</button>
+                <button class="back-button" onclick="showChapterList()">${text.backToChapters}</button>
+            `;
+
+            let html = `<h2>${chapter.title}</h2>`;
+            chapter.lines.forEach((line, lineIdx) => {
+                const speakerClass = (line.speaker === config.speakers.first)
+                    ? 'speaker-first' : 'speaker-second';
+                html += `<div class="dialogue-line" id="line-${lineIdx}">`;
+                const formattedText = convertMarkdownImages(convertMarkdownFormatting(convertReferencesToSuperscript(line.text)));
+                html += `<span class="${speakerClass}">${line.speaker}:</span> ${formattedText}`;
+                html += `</div>`;
+            });
+
+            if (chapter.references && chapter.references.length > 0) {
+                html += `<div style="margin-top: 30px; padding: 20px; background: #f9f9f9; border-left: 4px solid #0066cc; border-radius: 4px;">`;
+                html += `<h3 style="margin-top: 0;">${config.keywords.references}</h3>`;
+                chapter.references.forEach(reference => {
+                    html += `<p style="margin: 10px 0;"><strong>[${reference.number}]</strong> ${convertMarkdownLinks(reference.text)}</p>`;
+                });
+                html += `</div>`;
+            }
+
+            document.getElementById('dialogue-content').innerHTML = html;
+            document.getElementById('chapter-list').style.display = 'none';
+            document.getElementById('dialogue-container').classList.add('active');
+
+            updateURL('learning', chapterIndex);
+        }
+
+        function showChapterList() {
+            stopSpeaking();
+            playbackState = 'idle';
+            selectedChapter = null;
+
+            document.getElementById('chapter-list').style.display = 'block';
+            document.getElementById('dialogue-container').classList.remove('active');
+
+            updateURL('learning', null);
+        }
+
+        // Returns two voices for dialogue speakers. Prefers language-specific voices,
+        // falls back to any available. If only one voice exists, both speakers use it.
+        function getVoicesForLanguage(lang) {
+            const voices = window.speechSynthesis.getVoices();
+            const targetLang = languageConfig[lang].speechCode;
+            const langVoices = voices.filter(v => v.lang.startsWith(targetLang.split('-')[0]));
+            const availableVoices = langVoices.length > 0 ? langVoices : voices;
+
+            return {
+                voice1: availableVoices[0] || null,
+                voice2: availableVoices[1] || availableVoices[0] || null
+            };
+        }
+
+        function stripMarkdown(text) {
+            return text
+                .replace(/!\[(.*?)\]\((.*?)\)/g, '')  // images ![alt](url)
+                .replace(/\*\*([^*]+)\*\*/g, '$1')    // **bold**
+                .replace(/\*([^*]+)\*/g, '$1')        // *italic*
+                .replace(/\[\d+\]/g, '')              // reference markers [1], [2], etc.
+                .replace(/^- /gm, '')                 // bullet points at line start
+                .replace(/^[-*] /gm, '');             // other list markers
+        }
+
+        function playSelectedDialogue() {
+            if (selectedChapter === null) return;
+            if (!('speechSynthesis' in window)) {
+                const text = languageConfig[currentLang].ui;
+                alert(text.browserNoSpeech);
+                return;
+            }
+
+            stopSpeaking();
+            playbackState = 'playing';
+            currentUtteranceIndex = 0;
+            allUtterances = [];
+            updatePlayPauseButton();
+
+            const voices = getVoicesForLanguage(currentLang);
+            const config = languageConfig[currentLang];
+
+            const chapter = chapters[selectedChapter];
+            chapter.lines.forEach((line, lineIdx) => {
+                const cleanText = stripMarkdown(line.text);
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.lang = config.speechCode;
+                utterance.rate = 0.90;
+
+                if (line.speaker === config.speakers.first && voices.voice1) {
+                    utterance.voice = voices.voice1;
+                    utterance.pitch = 0.95; // Lower pitch for contrast
+                } else if (line.speaker === config.speakers.second && voices.voice2) {
+                    utterance.voice = voices.voice2;
+                    utterance.pitch = 1.15; // Higher pitch for contrast
+                }
+
+                utterance.onstart = () => {
+                    currentUtteranceIndex = lineIdx;
+                    highlightLine(lineIdx);
+                };
+
+                utterance.onerror = (event) => {
+                    if (event.error !== 'canceled' && event.error !== 'interrupted') {
+                        console.error('Speech synthesis error for line:', lineIdx, 'Error:', event.error);
+                    }
+                };
+
+                allUtterances.push(utterance);
+                window.speechSynthesis.speak(utterance);
+            });
+        }
+
+        // Pause/resume workaround for speechSynthesis compatibility
+        // Observed behavior: On some browsers (tested on mobile Chrome), speechSynthesis.pause()
+        // does not actually pause playback - speechSynthesis.paused remains false and audio continues.
+        // Similarly, speechSynthesis.resume() has no effect because paused state was never true.
+        // Desktop Chrome: pause()/resume() work correctly using playbackState variable tracking.
+        // Mobile Chrome: pause()/resume() API calls are accepted but have no effect on playback.
+        // Workaround: Use cancel() to stop, then replay from currentUtteranceIndex.
+        // Limitation: This loses position within the current utterance (restarts from beginning of that line).
+        let playbackState = 'idle'; // 'idle', 'playing', 'paused'
+        let currentUtteranceIndex = 0;
+        let allUtterances = [];
+
+        function togglePlayPause() {
+            if (!('speechSynthesis' in window)) {
+                const text = languageConfig[currentLang].ui;
+                alert(text.browserNoSpeech);
+                return;
+            }
+
+            if (playbackState !== 'idle') {
+                pauseOrResume();
+            } else {
+                playSelectedDialogue();
+            }
+        }
+
+        function pauseOrResume() {
+            if (!('speechSynthesis' in window)) return;
+
+            if (playbackState === 'paused') {
+                window.speechSynthesis.cancel();
+                playbackState = 'playing';
+
+                // Note: Restarts from beginning of the utterance that was "paused"
+                for (let i = currentUtteranceIndex; i < allUtterances.length; i++) {
+                    window.speechSynthesis.speak(allUtterances[i]);
+                }
+            } else if (playbackState === 'playing') {
+                window.speechSynthesis.cancel();
+                playbackState = 'paused';
+            }
+
+            updatePlayPauseButton();
+        }
+
+        function updatePlayPauseButton() {
+            const btn = document.getElementById('play-pause-button');
+            const text = languageConfig[currentLang].ui;
+            if (btn) {
+                if (playbackState === 'paused') {
+                    btn.textContent = text.resume;
+                } else if (playbackState === 'playing') {
+                    btn.textContent = text.pause;
+                } else {
+                    btn.textContent = text.playDialogue;
+                }
+            }
+        }
+
+        function stopSpeaking() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                playbackState = 'idle';
+                currentUtteranceIndex = 0;
+                allUtterances = [];
+                updatePlayPauseButton();
+            }
+        }
+
+        function highlightLine(lineIdx) {
+            document.querySelectorAll('.dialogue-line').forEach(el => {
+                el.classList.remove('highlight');
+            });
+
+            const lineEl = document.getElementById(`line-${lineIdx}`);
+            if (lineEl) {
+                lineEl.classList.add('highlight');
+                lineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        (function init() {
+            stopSpeaking();
+
+            const params = getURLParameters();
+            currentLang = params.lang;
+
+            document.getElementById('lang-dropdown').value = currentLang;
+
+            updateUIText();
+
+            if (!window.location.search) {
+                updateURL(params.mode, params.chapter);
+            }
+
+            loadREADME(currentLang).then(() => {
+                const mode = params.mode;
+                if (mode === 'quiz') {
+                    const quizTab = document.querySelectorAll('.tab')[1];
+                    quizTab.click();
+
+                    if (params.chapter !== null && chapters[params.chapter]) {
+                        showQuiz(params.chapter);
+                    } else {
+                        updateURL('quiz', null);
+                        showQuizList();
+                    }
+                } else {
+                    if (params.chapter !== null && chapters[params.chapter]) {
+                        showChapter(params.chapter);
+                    } else {
+                        updateURL('learning', null);
+                        showChapterList();
+                    }
+                }
+            });
+        })();
+
+        function showTab(tabName) {
+            stopSpeaking();
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+
+            const mode = (tabName === 'learn') ? 'learning' : 'quiz';
+            updateURL(mode, null);
+        }
+
+        let selectedQuizChapter = null;
+        let userAnswers = {};
+
+        function showQuiz(chapterIndex, preserveAnswers = false) {
+            selectedQuizChapter = chapterIndex;
+            if (!preserveAnswers) {
+                userAnswers = {};
+            }
+            const chapter = chapters[chapterIndex];
+            const text = languageConfig[currentLang].ui;
+            const keywords = languageConfig[currentLang].keywords;
+
+            let html = `<h2>${chapter.title}</h2>`;
+
+            chapter.questions.forEach((question, questionIndex) => {
+                html += `<div class="quiz-question" id="question-${questionIndex}">`;
+                html += `<div class="question-text">${questionIndex + 1}. ${question.question}</div>`;
+
+                if (question.type === keywords.trueFalseType) {
+                    html += `<label class="answer-option" id="answer-${questionIndex}-0">`;
+                    html += `<input type="radio" name="q${questionIndex}" value="true" onchange="recordAnswer(${questionIndex}, 'true')"> ${text.quizTrue}`;
+                    html += `</label>`;
+                    html += `<label class="answer-option" id="answer-${questionIndex}-1">`;
+                    html += `<input type="radio" name="q${questionIndex}" value="false" onchange="recordAnswer(${questionIndex}, 'false')"> ${text.quizFalse}`;
+                    html += `</label>`;
+                } else if (question.type === keywords.multipleChoiceType) {
+                    question.answers.forEach((answer, answerIndex) => {
+                        html += `<label class="answer-option" id="answer-${questionIndex}-${answerIndex}">`;
+                        html += `<input type="checkbox" name="q${questionIndex}" value="${answerIndex}" onchange="recordAnswer(${questionIndex}, ${answerIndex}, true)"> ${answer}`;
+                        html += `</label>`;
+                    });
+                }
+
+                html += `<div class="rationale" id="rationale-${questionIndex}"></div>`;
+                html += `</div>`;
+            });
+
+            document.getElementById('quiz-content').innerHTML = html;
+            document.getElementById('quiz-chapter-list').style.display = 'none';
+            document.getElementById('quiz-container').style.display = 'block';
+
+            updateURL('quiz', chapterIndex);
+        }
+
+        function recordAnswer(questionIndex, value, isCheckbox = false) {
+            if (isCheckbox) {
+                if (!userAnswers[questionIndex]) {
+                    userAnswers[questionIndex] = [];
+                }
+                const valueNum = parseInt(value);
+                const existingIndex = userAnswers[questionIndex].indexOf(valueNum);
+                if (existingIndex > -1) {
+                    userAnswers[questionIndex].splice(existingIndex, 1);
+                } else {
+                    userAnswers[questionIndex].push(valueNum);
+                }
+            } else {
+                if (value === 'true' || value === 'false') {
+                    userAnswers[questionIndex] = value === 'true';
+                } else {
+                    userAnswers[questionIndex] = parseInt(value);
+                }
+            }
+        }
+
+        function checkAnswers() {
+            if (selectedQuizChapter === null) return;
+
+            const chapter = chapters[selectedQuizChapter];
+            const text = languageConfig[currentLang].ui;
+            const keywords = languageConfig[currentLang].keywords;
+            let correct = 0;
+            let total = chapter.questions.length;
+
+            chapter.questions.forEach((question, questionIndex) => {
+                const questionDiv = document.getElementById(`question-${questionIndex}`);
+                const rationaleDiv = document.getElementById(`rationale-${questionIndex}`);
+                const userAnswer = userAnswers[questionIndex];
+
+                let isCorrect = false;
+
+                if (question.type === keywords.trueFalseType) {
+                    isCorrect = userAnswer === question.correct[0];
+
+                    const trueOption = document.getElementById(`answer-${questionIndex}-0`);
+                    const falseOption = document.getElementById(`answer-${questionIndex}-1`);
+
+                    if (question.correct[0]) {
+                        trueOption.classList.add('correct');
+                        if (userAnswer === false) falseOption.classList.add('incorrect');
+                    } else {
+                        falseOption.classList.add('correct');
+                        if (userAnswer === true) trueOption.classList.add('incorrect');
+                    }
+
+                    rationaleDiv.innerHTML = convertMarkdownFormatting(question.rationale);
+                    rationaleDiv.classList.add('show');
+
+                } else if (question.type === keywords.multipleChoiceType) {
+                    const userAnswerArray = Array.isArray(userAnswer) ? userAnswer : [userAnswer];
+                    const correctArray = question.correct;
+
+                    isCorrect = userAnswerArray.length === correctArray.length &&
+                                userAnswerArray.every(answer => correctArray.includes(answer));
+
+                    question.answers.forEach((answer, answerIndex) => {
+                        const answerOption = document.getElementById(`answer-${questionIndex}-${answerIndex}`);
+                        if (correctArray.includes(answerIndex)) {
+                            answerOption.classList.add('correct');
+                        }
+                        if (userAnswerArray.includes(answerIndex) && !correctArray.includes(answerIndex)) {
+                            answerOption.classList.add('incorrect');
+                        }
+                    });
+
+                    let rationaleText = '';
+                    question.rationales.forEach((rationale) => {
+                        rationaleText += `${convertMarkdownFormatting(rationale)}<br><br>`;
+                    });
+                    rationaleDiv.innerHTML = rationaleText;
+                    rationaleDiv.classList.add('show');
+                }
+
+                if (isCorrect) {
+                    correct++;
+                    questionDiv.classList.add('answered-correct');
+                } else {
+                    questionDiv.classList.add('answered-incorrect');
+                }
+            });
+
+            const scoreDiv = document.getElementById('quiz-score');
+            scoreDiv.innerHTML = `<strong>${text.score}</strong> ${correct} / ${total} ${text.correct}`;
+            scoreDiv.style.display = 'block';
+        }
+
+        function showQuizList() {
+            selectedQuizChapter = null;
+            userAnswers = {};
+            document.getElementById('quiz-score').style.display = 'none';
+            document.getElementById('quiz-chapter-list').style.display = 'block';
+            document.getElementById('quiz-container').style.display = 'none';
+
+            updateURL('quiz', null);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "cyber-dialog",
+  "version": "1.0.0",
+  "description": "Interactive security awareness dialogues and quizzes",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "*"
+  }
+}

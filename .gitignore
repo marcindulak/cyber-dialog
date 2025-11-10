@@ -1,0 +1,10 @@
+*~
+.DS_Store
+*.log
+*.py[c,d,o]
+node_modules
+old
+playwright-report
+test-results
+.venv
+venv

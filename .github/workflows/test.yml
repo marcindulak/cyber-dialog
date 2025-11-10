@@ -1,0 +1,38 @@
+name: test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  # Run on first day of month at 3 AM UTC
+  schedule:
+    - cron: '0 3 1 * *'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v5
+
+      - name: print system info
+        run: |
+          set -eo pipefail
+          docker info
+          docker image ls
+          docker ps
+          df -h
+          id
+
+      - name: bash scripts/test_e2e.sh
+        run: |
+          set -eo pipefail
+          bash scripts/test_e2e.sh
+
+      - name: debug
+        if: failure()
+        run: |
+          docker ps -a | grep -v CONTAINER | cut -d' ' -f1 | xargs -I{} -r bash -c "docker container stats --no-stream {} ; docker logs {}"
