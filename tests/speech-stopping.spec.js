@@ -11,7 +11,7 @@ test.describe('Speech Stops on Navigation', () => {
 
     await expect(page.locator('text=Test')).toBeVisible();
     const buttonText = await playButton.textContent();
-    expect(buttonText.includes('Odsłuchaj dialog')).toBe(true);
+    expect(buttonText.includes('Odsłuchaj tekst')).toBe(true);
   });
 
   test('should stop audio when switching language', async ({ page }) => {
@@ -25,10 +25,10 @@ test.describe('Speech Stops on Navigation', () => {
     expect(page.url()).toContain('lang=en');
     await page.waitForFunction(() => {
       const btn = document.getElementById('play-pause-button');
-      return btn && btn.textContent.includes('Play the dialogue');
+      return btn && btn.textContent.includes('Listen to the text');
     });
     const buttonText = await playButton.textContent();
-    expect(buttonText.includes('Play the dialogue')).toBe(true);
+    expect(buttonText.includes('Listen to the text')).toBe(true);
   });
 
   test('should stop audio when navigating via URL', async ({ page }) => {
@@ -41,8 +41,12 @@ test.describe('Speech Stops on Navigation', () => {
 
     expect(page.url()).toContain('lang=en');
     expect(page.url()).toContain('chapter=1');
+    await page.waitForFunction(() => {
+      const btn = document.getElementById('play-pause-button');
+      return btn && btn.textContent.includes('Listen to the text');
+    });
     const buttonText = await newPlayButton.textContent();
-    expect(buttonText.includes('Play the dialogue')).toBe(true);
+    expect(buttonText.includes('Listen to the text')).toBe(true);
   });
 
   test('should stop audio when selecting different chapter', async ({ page }) => {
