@@ -87,6 +87,13 @@
         .answer-option input { margin-right: 10px; }
         .rationale { margin-top: 15px; padding: 15px; background: #f0f7ff; border-left: 4px solid #0066cc; display: none; }
         .rationale.show { display: block; }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(0, 102, 204, 0.4); }
+            50% { box-shadow: 0 0 10px 4px rgba(0, 102, 204, 0.8); }
+        }
+        #play-pause-button.pulse-glow {
+            animation: pulseGlow 2s ease-in-out 2;
+        }
     </style>
 </head>
 <body>
@@ -170,15 +177,15 @@
                 ui: {
                     tabLearning: 'Nauka',
                     tabQuiz: 'Test',
-                    selectChapter: 'Wybierz tematy poniżej, aby uczyć się cyberbezpieczeństwa:',
+                    selectChapter: 'Wybierz tematy poniżej, aby dowiedzieć się więcej o bezpieczeństwie w sieci:',
                     duration: 'Czas trwania:',
-                    playDialogue: 'Odsłuchaj dialog',
+                    playDialogue: 'Odsłuchaj tekst',
                     pause: '⏸️ Zatrzymaj',
                     resume: '▶️ Wznów',
-                    selectQuizChapter: 'Wybierz tematy poniżej, aby sprawdzić wiedzę z cyberbezpieczeństwa:',
+                    selectQuizChapter: 'Wybierz tematy poniżej, aby sprawdzić swoją wiedzę o bezpieczeństwie w sieci:',
                     numQuestions: 'Liczba pytań:',
                     checkAnswers: 'Sprawdź odpowiedzi',
-                    backToChapters: 'Wróc do tematów',
+                    backToChapters: 'Wróć',
                     score: 'Wynik:',
                     correct: 'poprawnych',
                     loadError: 'Błąd ładowania',
@@ -209,15 +216,15 @@
                 ui: {
                     tabLearning: 'Learning',
                     tabQuiz: 'Quiz',
-                    selectChapter: 'Select topics below to learn about cybersecurity:',
+                    selectChapter: 'Select the topics below to learn more about online safety:',
                     duration: 'Duration:',
-                    playDialogue: 'Play the dialogue',
+                    playDialogue: 'Listen to the text',
                     pause: '⏸️ Pause',
                     resume: '▶️ Resume',
-                    selectQuizChapter: 'Select topics below to check your cybersecurity knowledge:',
+                    selectQuizChapter: 'Select the topics below to test your online safety knowledge:',
                     numQuestions: 'Number of questions:',
                     checkAnswers: 'Check answers',
-                    backToChapters: 'Go back to topics',
+                    backToChapters: 'Go back',
                     score: 'Score:',
                     correct: 'correct',
                     loadError: 'Error loading',
@@ -519,9 +526,12 @@
 
             const controls = document.querySelector('#dialogue-container .controls');
             controls.innerHTML = `
-                <button id="play-pause-button" onclick="togglePlayPause()">${text.playDialogue}</button>
                 <button class="back-button" onclick="showChapterList()">${text.backToChapters}</button>
+                <button id="play-pause-button" onclick="togglePlayPause()">${text.playDialogue}</button>
             `;
+
+            const playButton = document.getElementById('play-pause-button');
+            playButton.classList.add('pulse-glow');
 
             let html = `<h2>${chapter.title}</h2>`;
             chapter.lines.forEach((line, lineIdx) => {

@@ -53,7 +53,7 @@ test.describe('Language Switching', () => {
     const englishQuestion = await page.locator('.question-text').first().textContent();
 
     await page.selectOption('#lang-dropdown', 'pl');
-    await expect(page.locator('text=Test')).toBeVisible();
+    await expect(page.locator('button:has-text("Test")')).toBeVisible();
     await expect(page.locator('h2:has-text("Temat 1")')).toBeVisible();
 
     const polishQuestion = await page.locator('.question-text').first().textContent();
