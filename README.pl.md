@@ -269,7 +269,7 @@ Dlatego traktuj AI jak dziecko - może się mylić i robić niespodziewane rzecz
 
 **Ostrożna:** Jak stworzyć silne hasła które mogę zapamiętać?
 
-**Ciekawska:** Użyj długiego zdania - takiego jak "Moje pięć Kotów mówi płynnie po Japońsku!" To jest dużo silniejsze niż krótkie hasła.[2] Użyj dziwnego zdania, które będziesz w stanie zapamiętać. Możesz użyć dużych liter lub cyfr gdziekolwiek w zdaniu. Ale nie używaj dokładnie naszego przykładu zdania - stwórz swoje własne które zapamiętasz!
+**Ciekawska:** Użyj długiego zdania - takiego jak "Moje pięć Kotów mówi Japońsku płynnie po!" To jest dużo silniejsze niż krótkie hasła.[2] Użyj dziwnego zdania, które będziesz w stanie zapamiętać. Możesz użyć dużych liter lub cyfr gdziekolwiek w zdaniu. Ale nie używaj dokładnie naszego przykładu zdania - stwórz swoje własne które zapamiętasz!
 
 **Ostrożna:** To jest długie hasło! Ale pamiętałabym je bo jest dziwne - i do tego ja nie mam kotów!
 
