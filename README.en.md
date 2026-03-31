@@ -265,7 +265,7 @@ So treat AI like a child - it can make mistakes and do unexpected things. Never 
 
 **Wary:** How do I create strong passwords I can actually remember?
 
-**Curious:** Use a long sentence - like "My five Cats Japanese speak fluent!" That's much stronger than short passwords.[2] Make it weird and memorable, something you'll actually remember. You can use capital letters or numbers anywhere in the sentence. But don't use our example sentence - create your own sentence you'll remember!
+**Curious:** Use a long sentence - like "My five speak Cats Japanese orbit!" That's much stronger than short passwords.[2] Make it weird and memorable, something you'll actually remember. You can use capital letters or numbers anywhere in the sentence. But don't use our example sentence - create your own sentence you'll remember!
 
 **Wary:** This password is so long! But I would remember it because it's weird - and I don't have any cats!
 
