@@ -269,7 +269,7 @@ Dlatego traktuj AI jak dziecko - może się mylić i robić niespodziewane rzecz
 
 **Ostrożna:** Jak stworzyć silne hasła które mogę zapamiętać?
 
-**Ciekawska:** Użyj długiego zdania - takiego jak "Moje pięć mówi Kotów Japońsku orbita!" To jest dużo silniejsze niż krótkie hasła.[2] Użyj dziwnego zdania, które będziesz w stanie zapamiętać. Możesz użyć dużych liter lub cyfr gdziekolwiek w zdaniu. Ale nie używaj dokładnie naszego przykładu zdania - stwórz swoje własne które zapamiętasz!
+**Ciekawska:** Użyj długiego, bezsensownego ciągu słów - takiego jak "Moje pięć3gra Kotów Japońsku!" To jest dużo silniejsze niż krótkie hasła.[2] Użyj dziwnego zdania, które będziesz w stanie zapamiętać. Możesz użyć dużych liter, znaków specjalnych lub cyfr gdziekolwiek w zdaniu. Ale nie używaj dokładnie naszego przykładu zdania - stwórz swoje własne które zapamiętasz!
 
 **Ostrożna:** To jest długie hasło! Ale pamiętałabym je bo jest dziwne - i do tego ja nie mam kotów!
 
@@ -313,11 +313,11 @@ Dlatego traktuj AI jak dziecko - może się mylić i robić niespodziewane rzecz
 
 **Ostrożna:** A co jeśli ktoś weźmie mój telefon?
 
-**Ciekawska:** Zawsze używaj blokady ekranu - PINu lub wzoru. Niektórzy ludzie cenią wygodę bardziej niż prywatność i używają odcisku palca lub uwierzytelniania twarzą, co jest wygodne ale przechowuje Twoje dane biometryczne.
+**Ciekawska:** Zawsze używaj blokady ekranu - PINu lub wzoru. Chroń je przed dziećmi. Mogą je ujawnić obcym, nie zdając sobie sprawy z ryzyka. Niektórzy ludzie cenią wygodę bardziej niż prywatność i używają odcisku palca lub uwierzytelniania twarzą, co jest wygodne ale przechowuje Twoje dane biometryczne.
 
 **Ostrożna:** To dużo rzeczy do zapamiętania!
 
-**Ciekawska:** Zacznij od tego: 1) nigdy nie pokazuj haseł innym osobom, 2) używaj długich zdań jako haseł, i 3) włącz 2FA na koncie email (i pamiętaj żeby zapisać kody odzyskiwania dostępu!). To będzie chronić Cię lepiej niż większość ludzi online. To wszystko jest technicznie zaawansowane, więc najlepiej poproś kogoś zaufanego żeby pomógł Tobie to skonfigurować.
+**Ciekawska:** Zacznij od tego: 1) nigdy nie pokazuj haseł innym osobom, 2) używaj długich ciągów słow jako haseł, i 3) włącz 2FA na koncie email (i pamiętaj żeby zapisać kody odzyskiwania dostępu!). To będzie chronić Cię lepiej niż większość ludzi online. To wszystko jest technicznie zaawansowane, więc najlepiej poproś kogoś zaufanego żeby pomógł Tobie to skonfigurować.
 
 ### Źródła
 

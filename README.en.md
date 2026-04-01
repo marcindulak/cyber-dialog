@@ -265,7 +265,7 @@ So treat AI like a child - it can make mistakes and do unexpected things. Never 
 
 **Wary:** How do I create strong passwords I can actually remember?
 
-**Curious:** Use a long sentence - like "My five speak Cats Japanese orbit!" That's much stronger than short passwords.[2] Make it weird and memorable, something you'll actually remember. You can use capital letters or numbers anywhere in the sentence. But don't use our example sentence - create your own sentence you'll remember!
+**Curious:** Use a long, nonsensical list of words -- like "My five3play Cats Japanese!" That's much stronger than short passwords.[2] Make it weird and memorable, something you'll actually remember. You can use capital letters, special characters or numbers anywhere in the sentence. But don't use our example sentence - create your own sentence you'll remember!
 
 **Wary:** This password is so long! But I would remember it because it's weird - and I don't have any cats!
 
@@ -309,11 +309,11 @@ So treat AI like a child - it can make mistakes and do unexpected things. Never 
 
 **Wary:** What about someone just picking up my phone?
 
-**Curious:** Always use a screen lock - PIN or pattern. Some people prioritize convenience over privacy and use fingerprint or face unlock, which is convenient but stores your biometric data.
+**Curious:** Always use a screen lock - PIN or pattern. Keep them away from children. They may reveal them to strangers without realizing the risk. Some people prioritize convenience over privacy and use fingerprint or face unlock, which is convenient but stores your biometric data.
 
 **Wary:** This seems like a lot to remember!
 
-**Curious:** Start with these steps: 1) never show passwords to anyone, 2) use long memorable sentences for passwords, and 3) enable 2FA on your email (and remember to save the recovery codes!). Those steps already protect you better than most people online. This is all technically advanced, so ideally ask someone trusted to help you set it up.
+**Curious:** Start with these steps: 1) never show passwords to anyone, 2) use long lists of words for passwords, and 3) enable 2FA on your email (and remember to save the recovery codes!). Those steps already protect you better than most people online. This is all technically advanced, so ideally ask someone trusted to help you set it up.
 
 ### References
 
