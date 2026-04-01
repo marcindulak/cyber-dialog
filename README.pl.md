@@ -145,7 +145,7 @@ Zamiast tego:
 
 **Ostrożna:** I jak to sprawdzić?
 
-**Ciekawska:** Na telefonie możesz dlużej przytrzymać palec na linku - przez sekundę. Wtedy zobaczysz prawdziwy adres, do którego link prowadzi, ale cały czas na niego nie klikaj!
+**Ciekawska:** Na telefonie możesz dłużej przytrzymać palec na linku - przez sekundę. Wtedy zobaczysz prawdziwy adres, do którego link prowadzi, ale cały czas na niego nie klikaj!
 
 **Ostrożna:** I czego mam wtedy szukać?
 
@@ -317,7 +317,7 @@ Dlatego traktuj AI jak dziecko - może się mylić i robić niespodziewane rzecz
 
 **Ostrożna:** To dużo rzeczy do zapamiętania!
 
-**Ciekawska:** Zacznij od tego: 1) nigdy nie pokazuj haseł innym osobom, 2) używaj długich ciągów słow jako haseł, i 3) włącz 2FA na koncie email (i pamiętaj żeby zapisać kody odzyskiwania dostępu!). To będzie chronić Cię lepiej niż większość ludzi online. To wszystko jest technicznie zaawansowane, więc najlepiej poproś kogoś zaufanego żeby pomógł Tobie to skonfigurować.
+**Ciekawska:** Zacznij od tego: 1) nigdy nie pokazuj haseł innym osobom, 2) używaj długich ciągów słów jako haseł, i 3) włącz 2FA na koncie email (i pamiętaj żeby zapisać kody odzyskiwania dostępu!). To będzie chronić Cię lepiej niż większość ludzi online. To wszystko jest technicznie zaawansowane, więc najlepiej poproś kogoś zaufanego żeby pomógł Tobie to skonfigurować.
 
 ### Źródła
 
