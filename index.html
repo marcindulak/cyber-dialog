@@ -328,7 +328,7 @@
                     let chapterHtml = `<h2>${text.selectChapter}</h2>`;
                     chapters.forEach((chapter, i) => {
                         chapterHtml += `<div class="chapter-item" onclick="showChapter(${i})">`;
-                        chapterHtml += `<div class="chapter-title">${chapter.title}</div>`;
+                        chapterHtml += `<div class="chapter-title">${escapeHtml(chapter.title)}</div>`;
                         chapterHtml += `<div>${text.duration} ${estimateDuration(chapter)}</div>`;
                         chapterHtml += `</div>`;
                     });
@@ -340,7 +340,7 @@
                 chapters.forEach((chapter, i) => {
                     if (chapter.questions && chapter.questions.length > 0) {
                         quizHtml += `<div class="chapter-item" onclick="showQuiz(${i})">`;
-                        quizHtml += `<div class="chapter-title">${chapter.title}</div>`;
+                        quizHtml += `<div class="chapter-title">${escapeHtml(chapter.title)}</div>`;
                         quizHtml += `<div>${text.numQuestions} ${chapter.questions.length}</div>`;
                         quizHtml += `</div>`;
                     }
@@ -350,7 +350,7 @@
             } catch (error) {
                 const text = languageConfig[lang].ui;
                 document.getElementById('chapter-list').innerHTML =
-                    `<p style="color: red;">${text.loadError} README.${lang}.md: ${error.message}</p>`;
+                    `<p style="color: red;">${text.loadError} README.${escapeHtml(lang)}.md: ${escapeHtml(error.message)}</p>`;
             }
         }
 
@@ -498,24 +498,50 @@
             return `${minutes} min`;
         }
 
+        // Escapes HTML special characters so that markdown-origin strings
+        // cannot inject tags or break out of attribute values when set via innerHTML.
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // HTML-escapes text first so all downstream functions in the processing
+        // chain receive safe input.  The digits-only capture group cannot inject HTML.
         function convertReferencesToSuperscript(text) {
-            return text.replace(/\[(\d+)\]/g, '<sup>[$1]</sup>');
+            return escapeHtml(text).replace(/\[(\d+)\]/g, '<sup>[$1]</sup>');
         }
 
-        // Convert markdown links [text](url) to HTML links
+        // Convert markdown links [text](url) to HTML links.
+        // HTML-escapes text first so quote injection into the href attribute is
+        // prevented.  Only http/https URLs are allowed to block javascript: hrefs.
         function convertMarkdownLinks(text) {
-            return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+            return escapeHtml(text).replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(match, linkText, url) {
+                const safeUrl = /^https?:\/\//i.test(url) ? url : '';
+                return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
+            });
         }
 
+        // Converts **bold** and *italic* markdown to HTML.
+        // Input must already be HTML-escaped: called after convertReferencesToSuperscript
+        // in the processing chain, or after escapeHtml() at standalone call sites.
         function convertMarkdownFormatting(text) {
             return text
-                .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')  // **bold**
-                .replace(/\*([^*]+)\*/g, '<em>$1</em>');              // *italic*
+                .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*([^*]+)\*/g, '<em>$1</em>');
         }
 
-        // Convert markdown images ![alt](url) to HTML img tags
+        // Convert markdown images ![alt](url) to HTML img tags.
+        // Input is expected to be HTML-escaped (called after convertReferencesToSuperscript
+        // in the chain).  Only http/https src URLs are allowed.
         function convertMarkdownImages(text) {
-            return text.replace(/!\[(.*?)\]\((.*?)\)/g, '<img alt="$1" src="$2" style="max-width: 100%; height: auto; border-radius: 8px; margin: 15px 0;">');
+            return text.replace(/!\[(.*?)\]\((.*?)\)/g, function(match, alt, src) {
+                const safeSrc = /^https?:\/\//i.test(src) ? src : '';
+                return `<img alt="${alt}" src="${safeSrc}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 15px 0;">`;
+            });
         }
 
         function showChapter(chapterIndex) {
@@ -533,13 +559,13 @@
             const playButton = document.getElementById('play-pause-button');
             playButton.classList.add('pulse-glow');
 
-            let html = `<h2>${chapter.title}</h2>`;
+            let html = `<h2>${escapeHtml(chapter.title)}</h2>`;
             chapter.lines.forEach((line, lineIdx) => {
                 const speakerClass = (line.speaker === config.speakers.first)
                     ? 'speaker-first' : 'speaker-second';
                 html += `<div class="dialogue-line" id="line-${lineIdx}">`;
                 const formattedText = convertMarkdownImages(convertMarkdownFormatting(convertReferencesToSuperscript(line.text)));
-                html += `<span class="${speakerClass}">${line.speaker}:</span> ${formattedText}`;
+                html += `<span class="${speakerClass}">${escapeHtml(line.speaker)}:</span> ${formattedText}`;
                 html += `</div>`;
             });
 
@@ -784,11 +810,11 @@
             const text = languageConfig[currentLang].ui;
             const keywords = languageConfig[currentLang].keywords;
 
-            let html = `<h2>${chapter.title}</h2>`;
+            let html = `<h2>${escapeHtml(chapter.title)}</h2>`;
 
             chapter.questions.forEach((question, questionIndex) => {
                 html += `<div class="quiz-question" id="question-${questionIndex}">`;
-                html += `<div class="question-text">${questionIndex + 1}. ${question.question}</div>`;
+                html += `<div class="question-text">${questionIndex + 1}. ${escapeHtml(question.question)}</div>`;
 
                 if (question.type === keywords.trueFalseType) {
                     html += `<label class="answer-option" id="answer-${questionIndex}-0">`;
@@ -800,7 +826,7 @@
                 } else if (question.type === keywords.multipleChoiceType) {
                     question.answers.forEach((answer, answerIndex) => {
                         html += `<label class="answer-option" id="answer-${questionIndex}-${answerIndex}">`;
-                        html += `<input type="checkbox" name="q${questionIndex}" value="${answerIndex}" onchange="recordAnswer(${questionIndex}, ${answerIndex}, true)"> ${answer}`;
+                        html += `<input type="checkbox" name="q${questionIndex}" value="${answerIndex}" onchange="recordAnswer(${questionIndex}, ${answerIndex}, true)"> ${escapeHtml(answer)}`;
                         html += `</label>`;
                     });
                 }
@@ -867,7 +893,7 @@
                         if (userAnswer === true) trueOption.classList.add('incorrect');
                     }
 
-                    rationaleDiv.innerHTML = convertMarkdownFormatting(question.rationale);
+                    rationaleDiv.innerHTML = convertMarkdownFormatting(escapeHtml(question.rationale));
                     rationaleDiv.classList.add('show');
 
                 } else if (question.type === keywords.multipleChoiceType) {
@@ -889,7 +915,7 @@
 
                     let rationaleText = '';
                     question.rationales.forEach((rationale) => {
-                        rationaleText += `${convertMarkdownFormatting(rationale)}<br><br>`;
+                        rationaleText += `${convertMarkdownFormatting(escapeHtml(rationale))}<br><br>`;
                     });
                     rationaleDiv.innerHTML = rationaleText;
                     rationaleDiv.classList.add('show');
